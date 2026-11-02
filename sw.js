@@ -1,8 +1,10 @@
 /* Stream TV — shell cache (offline-ready), works under /<repo>/ on GitHub Pages */
-const VERSION = 'stv-v3';
+const VERSION = 'stv-v4';
 const SHELL = [
   './',
   './index.html',
+  './catalogo.html',
+  './diag.html',
   './styles.css',
   './app.js',
   './catalog.json',

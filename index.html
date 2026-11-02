@@ -3,22 +3,192 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Stream TV</title>
-<meta name="theme-color" content="#0b0b0f">
-<meta name="description" content="TV PWA com navegação por controle remoto">
+<title>TV</title>
+<meta name="theme-color" content="#07070b">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css">
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js" defer></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:#07070b;color:#f4f4f7;overflow:hidden;font-family:"Helvetica Neue",Arial,System,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  body{padding:4vh 5vw 3vh;display:flex;flex-direction:column;cursor:default}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4vh}
+  .brand{font-size:2.1vw;font-weight:900;letter-spacing:.06vw;color:#e50914}
+  .brand small{display:block;font-size:.8vw;letter-spacing:.34vw;color:#7d7d8a;font-weight:600;margin-top:.35vw}
+  .status{display:flex;align-items:center;gap:1.4vw;font-size:.95vw;color:#8d8d9a}
+  .drm{display:flex;align-items:center;gap:.5vw;padding:.4vw .9vw;border-radius:2vw;background:#14141c;border:1px solid #24242f}
+  .dot{width:.55vw;height:.55vw;border-radius:50%;background:#f59e0b}
+  .dot.ok{background:#22c55e}.dot.no{background:#ef4444}
+  .clock{font-variant-numeric:tabular-nums;font-size:1.5vw;font-weight:300;color:#c9c9d3}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.6vw;flex:1;align-content:start}
+  .tile{position:relative;border-radius:.7vw;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;
+        padding:1.3vw;outline:none;transition:transform .16s cubic-bezier(.22,.61,.36,1),box-shadow .16s;background:#15151d;
+        box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+  .tile::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.55),transparent 62%)}
+  .tile b{position:relative;z-index:2;font-size:1.55vw;font-weight:800;letter-spacing:-.02vw;text-shadow:0 2px 10px rgba(0,0,0,.5)}
+  .tile span{position:relative;z-index:2;font-size:.82vw;color:rgba(255,255,255,.72);margin-top:.3vw}
+  .tile.focused{transform:scale(1.06);box-shadow:0 0 0 .18vw #fff,0 0 3vw rgba(255,255,255,.28);z-index:5}
+  .tile.focused::after{background:linear-gradient(0deg,rgba(0,0,0,.35),transparent 55%)}
+  footer{margin-top:2.4vh;display:flex;justify-content:space-between;align-items:center;font-size:.9vw;color:#6d6d7a}
+  kbd{background:#191922;border:1px solid #2a2a36;border-radius:.3vw;padding:.1vw .45vw;font-family:inherit;font-size:.82vw;color:#a9a9b6}
+  .toast{position:fixed;left:50%;bottom:6vh;transform:translate(-50%,2vh);background:#191922;border:1px solid #2c2c38;
+         padding:.8vw 1.4vw;border-radius:.5vw;font-size:.95vw;opacity:0;transition:.2s;pointer-events:none}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  @media (max-aspect-ratio:1/1){
+    .brand{font-size:7vw}.brand small{font-size:2.6vw;letter-spacing:1vw}
+    .grid{grid-template-columns:repeat(2,1fr);gap:3vw}.tile b{font-size:4.4vw}.tile span{font-size:2.8vw}
+    .clock{font-size:5vw}.status{font-size:2.8vw}.dot{width:2vw;height:2vw}footer{font-size:2.6vw}kbd{font-size:2.4vw}
+  }
+</style>
 </head>
 <body>
-<div id="app">
-  <nav id="rail" aria-label="Menu"></nav>
-  <main id="main"></main>
-</div>
-<div id="modal-root"></div>
-<div id="toast" class="toast"></div>
-<script src="app.js" defer></script>
+<header>
+  <div class="brand">TV<small>TELA INICIAL</small></div>
+  <div class="status">
+    <div class="drm"><i class="dot" id="d"></i><span id="drmtxt">testando DRM…</span></div>
+    <div class="clock" id="clock"></div>
+  </div>
+</header>
+
+<div class="grid" id="grid"></div>
+
+<footer>
+  <span><kbd>◀</kbd> <kbd>▲</kbd> <kbd>▼</kbd> <kbd>▶</kbd> navegar · <kbd>OK</kbd> abrir · <kbd>Voltar</kbd> sair</span>
+  <span id="hint">selecione um app</span>
+</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+var APPS = [
+  { name: 'Netflix',   desc: 'app oficial na web', url: 'https://www.netflix.com/browse', bg: 'linear-gradient(150deg,#3a0005,#0b0b0f)', fg: '#e50914' },
+  { name: 'YouTube',   desc: 'versão para TV',     url: 'https://www.youtube.com/tv',      bg: 'linear-gradient(150deg,#3a0a0a,#0b0b0f)', fg: '#ff0033' },
+  { name: 'Prime Video', desc: 'Amazon',           url: 'https://www.primevideo.com',      bg: 'linear-gradient(150deg,#00173a,#0b0b0f)', fg: '#00a8e1' },
+  { name: 'Disney+',   desc: 'Disney',             url: 'https://www.disneyplus.com',      bg: 'linear-gradient(150deg,#0a1440,#0b0b0f)', fg: '#7ea6ff' },
+  { name: 'Globoplay', desc: 'Globo',              url: 'https://globoplay.globo.com',     bg: 'linear-gradient(150deg,#3a1200,#0b0b0f)', fg: '#ff5c00' },
+  { name: 'Max',       desc: 'HBO Max',            url: 'https://www.max.com',             bg: 'linear-gradient(150deg,#1e0a3a,#0b0b0f)', fg: '#9b7bff' },
+  { name: 'Diagnóstico', desc: 'o que esta TV suporta', url: 'diag.html',                    bg: 'linear-gradient(150deg,#0f2a24,#0b0b0f)', fg: '#34d399' },
+  { name: 'Catálogo teste', desc: 'demo com clipes', url: 'catalogo.html',                  bg: 'linear-gradient(150deg,#2a2a1a,#0b0b0f)', fg: '#e5e509' }
+];
+
+var grid = document.getElementById('grid');
+APPS.forEach(function (a, i) {
+  var t = document.createElement('div');
+  t.className = 'tile focusable';
+  t.tabIndex = 0;
+  t.style.background = a.bg;
+  t.innerHTML = '<b style="color:' + a.fg + '">' + a.name + '</b><span>' + a.desc + '</span>';
+  t.addEventListener('click', function () { open(a); });
+  t.addEventListener('mouseenter', function () { set(t); });
+  grid.appendChild(t);
+});
+
+var cur = null;
+function set(el) {
+  if (!el) return;
+  if (cur && cur !== el) cur.classList.remove('focused');
+  cur = el; el.classList.add('focused');
+  try { el.focus({ preventScroll: true }); } catch (e) { }
+  document.getElementById('hint').textContent = APPS[[].indexOf.call(grid.children, el)].name;
+}
+function open(a) {
+  toast('abrindo ' + a.name + '…');
+  setTimeout(function () { location.href = a.url; }, 220);
+}
+function toast(m) {
+  var t = document.getElementById('toast');
+  t.textContent = m; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove('show'); }, 1600);
+}
+
+function all() { return [].slice.call(document.querySelectorAll('.tile')); }
+document.addEventListener('keydown', function (e) {
+  var k = e.keyCode;
+  var dirs = { 37: 'left', 38: 'up', 39: 'right', 40: 'down', 33: 'up', 34: 'down' };
+  var isOk = k === 13 || k === 32;
+  var isBack = k === 8 || k === 27 || k === 461 || k === 10009;
+  if (isBack) { e.preventDefault(); history.back(); return; }
+  if (isOk) {
+    e.preventDefault();
+    if (!cur) { set(all()[0]); return; }
+    cur.click(); return;
+  }
+  var dir = dirs[k];
+  if (!dir) return;
+  e.preventDefault();
+  var list = all();
+  var base = cur || list[0];
+  if (!cur) { set(base); return; }
+  var cr = base.getBoundingClientRect();
+  var cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
+  var vx = dir === 'left' ? -1 : dir === 'right' ? 1 : 0;
+  var vy = dir === 'up' ? -1 : dir === 'down' ? 1 : 0;
+  var best = null, bestScore = 1e9;
+  list.forEach(function (c) {
+    if (c === base) return;
+    var r = c.getBoundingClientRect();
+    var x = r.left + r.width / 2, y = r.top + r.height / 2;
+    var px = x - cx, py = y - cy;
+    var primary = px * vx + py * vy;
+    if (primary < 4) return;
+    var secondary = Math.abs(vx ? py : px);
+    var overlap = vx ? (Math.min(cr.bottom, r.bottom) - Math.max(cr.top, r.top))
+                     : (Math.min(cr.right, r.right) - Math.max(cr.left, r.left));
+    var score = primary + secondary * 2.2 + (overlap <= 0 ? Math.abs(overlap) * 3 + 100 : 0);
+    if (score < bestScore) { bestScore = score; best = c; }
+  });
+  if (best) set(best);
+});
+
+// gamepad
+var last = {};
+(function poll() {
+  var pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  for (var i = 0; i < pads.length; i++) {
+    var p = pads[i]; if (!p) continue;
+    var ax = p.axes[0] || 0, ay = p.axes[1] || 0;
+    var map = { 12: 38, 13: 40, 14: 37, 15: 39, 0: 13, 1: 27 };
+    for (var b in map) {
+      var pressed = p.buttons[b] && p.buttons[b].pressed;
+      if (pressed && !last[b]) document.dispatchEvent(new KeyboardEvent('keydown', { keyCode: map[b], bubbles: true }));
+      last[b] = pressed;
+    }
+    if (Math.abs(ax) > 0.6 || Math.abs(ay) > 0.6) {
+      var code = Math.abs(ax) > Math.abs(ay) ? (ax > 0 ? 39 : 37) : (ay > 0 ? 40 : 38);
+      if (!last.ax && performance.now() - (last.t || 0) > 220) {
+        last.t = performance.now();
+        document.dispatchEvent(new KeyboardEvent('keydown', { keyCode: code, bubbles: true }));
+      }
+      last.ax = true;
+    } else last.ax = false;
+  }
+  requestAnimationFrame(poll);
+})();
+
+// clock
+function tick() {
+  var d = new Date();
+  document.getElementById('clock').textContent =
+    String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+tick(); setInterval(tick, 15000);
+
+// DRM check — decide se Netflix vai tocar aqui
+(function drm() {
+  if (!navigator.requestMediaKeySystemAccess) { mark('no', 'sem DRM'); return; }
+  navigator.requestMediaKeySystemAccess('com.widevine.alpha', [{
+    initDataTypes: ['cenc'],
+    videoCapabilities: [{ contentType: 'video/mp4; codecs="avc1.42E01E"', robustness: 'SW_SECURE_DECODE' }],
+    audioCapabilities: [{ contentType: 'audio/mp4; codecs="mp4a.40.2"' }]
+  }]).then(function () { mark('ok', 'DRM: ok'); })
+    .catch(function () { mark('no', 'sem DRM'); });
+})();
+function mark(cls, txt) {
+  document.getElementById('d').className = 'dot ' + cls;
+  document.getElementById('drmtxt').textContent = txt;
+}
+
+set(all()[0]);
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(function () { });
+</script>
 </body>
 </html>
