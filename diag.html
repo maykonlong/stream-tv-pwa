@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Diagnóstico da TV</title>
+<style>
+  :root{--ok:#22c55e;--no:#ef4444;--warn:#f59e0b}
+  body{margin:0;background:#0b0b0f;color:#f2f2f5;font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding:3vw}
+  h1{font-size:3.2vw;margin:0 0 .6vw}
+  .sub{color:#9a9aa5;font-size:1.4vw;margin-bottom:2vw}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(26vw,1fr));gap:.7vw}
+  .item{background:#15151d;border-radius:.6vw;padding:1vw 1.2vw;display:flex;gap:1vw;align-items:flex-start}
+  .item b{display:block;font-size:1.05vw;font-weight:600}
+  .item span{color:#9a9aa5;font-size:.9vw;word-break:break-word}
+  .badge{flex:0 0 auto;width:1.5vw;height:1.5vw;border-radius:50%;font-size:1vw;display:grid;place-items:center;font-weight:700;color:#0b0b0f}
+  .yes{background:var(--ok)} .nope{background:var(--no)} .maybe{background:var(--warn)}
+  h2{font-size:1.6vw;margin:2vw 0 .8vw}
+  pre{background:#15151d;padding:1vw;border-radius:.6vw;font-size:.85vw;overflow:auto;color:#cfcfd6}
+  .note{font-size:1vw;color:#9a9aa5;margin-top:1vw}
+  @media (max-aspect-ratio:1/1){h1{font-size:9vw}.sub{font-size:4vw}.item b{font-size:3.6vw}.item span{font-size:3vw}
+    .badge{width:5vw;height:5vw;font-size:3.4vw}h2{font-size:5vw}pre{font-size:2.6vw}.note{font-size:3vw}
+    .grid{grid-template-columns:1fr;gap:2vw}}
+</style>
+</head>
+<body>
+<h1>O que esta TV consegue rodar</h1>
+<div class="sub" id="ua"></div>
+<div class="grid" id="grid"></div>
+<h2>Resumo para copiar</h2>
+<pre id="out">rodando…</pre>
+<div class="note">Se “Widevine (EME)” aparecer verde, Netflix/Prime no navegador podem tocar. Vermelho = nenhum site de streaming com DRM funciona aqui.</div>
+<script>
+const R = [];
+const add = (label, status, detail) => { R.push({ label, status, detail }); };
+
+function paint(){
+  document.getElementById('grid').innerHTML = R.map(r => `
+    <div class="item">
+      <div class="badge ${r.status === 'yes' ? 'yes' : r.status === 'no' ? 'nope' : 'maybe'}">${r.status === 'yes' ? '✓' : r.status === 'no' ? '✕' : '?'}</div>
+      <div><b>${r.label}</b><span>${r.detail || ''}</span></div>
+    </div>`).join('');
+  document.getElementById('out').textContent = JSON.stringify({
+    ua: navigator.userAgent,
+    screen: `${screen.width}x${screen.height} @${devicePixelRatio}x`,
+    result: R.map(r => `${r.status === 'yes' ? 'OK  ' : r.status === 'no' ? 'NAO ' : '??? '} ${r.label} — ${r.detail || ''}`)
+  }, null, 2);
+}
+
+add('Contexto seguro (https)', location.protocol === 'https:' || location.hostname === 'localhost' ? 'yes' : 'no',
+    location.protocol + ' — EME/DRM e service worker exigem https');
+
+const v = document.createElement('video');
+const can = t => { const r = v.canPlayType(t); return r === 'probably' ? ['yes', 'provavelmente'] : r === 'maybe' ? ['maybe', 'talvez'] : ['no', 'não']; };
+[['H.264 (MP4)', 'video/mp4; codecs="avc1.42E01E"'],
+ ['HEVC / H.265', 'video/mp4; codecs="hvc1.1.6.L93.B0"'],
+ ['VP9', 'video/webm; codecs="vp9"'],
+ ['AV1', 'video/mp4; codecs="av01.0.05M.08"'],
+ ['áudio AAC', 'audio/mp4; codecs="mp4a.40.2"'],
+ ['áudio AC3', 'audio/mp4; codecs="ac-3"'],
+ ['HLS nativo', 'application/vnd.apple.mpegurl']
+].forEach(([n, t]) => { const [s, d] = can(t); add(n, s, d); });
+
+add('Media Source Extensions', 'MediaSource' in window ? 'yes' : 'no', 'necessário para hls.js / DASH');
+add('WebAssembly', typeof WebAssembly === 'object' ? 'yes' : 'no', 'usado por players/ffmpeg no navegador');
+
+try {
+  const c = document.createElement('canvas');
+  const gl = c.getContext('webgl2') || c.getContext('webgl');
+  add('WebGL', gl ? 'yes' : 'no', gl ? (gl.getParameter(gl.VERSION) || 'ok') : 'sem aceleração');
+} catch (e) { add('WebGL', 'no', 'bloqueado'); }
+
+add('Service Worker / PWA', 'serviceWorker' in navigator ? 'yes' : 'no', 'instalar app e cache offline');
+add('Gamepad API', 'getGamepads' in navigator ? 'yes' : 'no', 'controle via USB/Bluetooth');
+
+(async () => {
+  // EME / DRM — o teste que decide tudo
+  if (!navigator.requestMediaKeySystemAccess) { add('Widevine (EME)', 'no', 'API EME inexistente'); paint(); return; }
+  const systems = [['Widevine', 'com.widevine.alpha'], ['PlayReady', 'com.microsoft.playready'], ['ClearKey', 'org.w3.clearkey']];
+  const cfg = [{
+    initDataTypes: ['cenc'],
+    videoCapabilities: [{ contentType: 'video/mp4; codecs="avc1.42E01E"', robustness: 'SW_SECURE_DECODE' }],
+    audioCapabilities: [{ contentType: 'audio/mp4; codecs="mp4a.40.2"' }]
+  }];
+  for (const [name, id] of systems) {
+    try {
+      const acc = await navigator.requestMediaKeySystemAccess(id, cfg);
+      add(name + ' (EME)', 'yes', 'aceito: ' + acc.keySystem);
+    } catch (e) {
+      add(name + ' (EME)', 'no', (e && e.name) || 'recusado');
+    }
+  }
+  paint();
+  // mede decodificação real de um H.264 local, se possível
+  try {
+    const c = document.createElement('canvas');
+    const gl = c.getContext('webgl');
+    if (gl) { const ext = gl.getExtension('WEBGL_debug_renderer_info'); if (ext) add('GPU', 'yes', gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)); }
+  } catch {}
+  paint();
+})();
+add('Tela', 'yes', `${screen.width}x${screen.height} @${devicePixelRatio}x`);
+add('Sistema', 'yes', navigator.platform || '—');
+paint();
+</script>
+</body>
+</html>

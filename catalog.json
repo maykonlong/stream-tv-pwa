@@ -1,0 +1,226 @@
+{
+  "title": "STREAM",
+  "tagline": "TV PWA",
+  "hero": {
+    "id": "hero-1",
+    "title": "Big Buck Bunny",
+    "backdrop": "",
+    "year": "2008",
+    "rating": "L",
+    "tags": [
+      "Animação",
+      "Comédia",
+      "Curta"
+    ],
+    "description": "Um coelho gigante e gentil tem seu dia arruinado por três roedores malvados. O que eles não sabem é que o coelho tem um plano — e um talento especial para armadilhas.",
+    "video": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+  },
+  "rows": [
+    {
+      "id": "demo",
+      "title": "Demonstração (offline)",
+      "type": "poster",
+      "items": [
+        {
+          "id": "demo-1",
+          "title": "Teste local HLS",
+          "meta": "2026 · 30 s · local",
+          "color": "#1f5c5c",
+          "video": "demo/index.m3u8",
+          "description": "Clipe gerado localmente para validar o player sem depender de CDN externa."
+        }
+      ]
+    },
+    {
+      "id": "trending",
+      "title": "Em alta",
+      "type": "poster",
+      "items": [
+        {
+          "id": "sintel",
+          "title": "Sintel",
+          "meta": "2010 · 15 min",
+          "color": "#4a2a6b",
+          "video": "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8",
+          "description": "Uma garota solitária cruza um mundo hostil à procura do dragão que criou."
+        },
+        {
+          "id": "tears",
+          "title": "Tears of Steel",
+          "meta": "2012 · 12 min",
+          "color": "#1f3d5c",
+          "video": "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
+          "description": "Num futuro próximo, um grupo de guerreiros e cientistas tenta salvar o mundo de robôs."
+        },
+        {
+          "id": "bunny",
+          "title": "Big Buck Bunny",
+          "meta": "2008 · 10 min",
+          "color": "#2d5a3d",
+          "video": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+          "description": "O clássico coelho gentil contra os roedores."
+        },
+        {
+          "id": "elephants",
+          "title": "Elephants Dream",
+          "meta": "2006 · 11 min",
+          "color": "#5c3a1f",
+          "video": "https://test-streams.mux.dev/pts_shift/master.m3u8",
+          "description": "Dois personagens exploram uma máquina infinita e absurda."
+        },
+        {
+          "id": "sintel-2",
+          "title": "Sintel: Making Of",
+          "meta": "2010 · 8 min",
+          "color": "#6b2a3f",
+          "video": "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8",
+          "description": "Bastidores da produção do curta."
+        },
+        {
+          "id": "bunny-2",
+          "title": "Bunny: Extras",
+          "meta": "2008 · 6 min",
+          "color": "#3d4a5c",
+          "video": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+          "description": "Cenas extras e testes de animação."
+        }
+      ]
+    },
+    {
+      "id": "series",
+      "title": "Séries",
+      "type": "poster",
+      "items": [
+        {
+          "id": "serie-1",
+          "title": "Open Movie",
+          "meta": "T1 · 4 episódios",
+          "color": "#2b3f6b",
+          "video": "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8",
+          "description": "Quatro episódios sobre como um filme aberto é feito.",
+          "episodes": [
+            {
+              "id": "serie-1-e1",
+              "title": "E1 — O roteiro",
+              "video": "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8"
+            },
+            {
+              "id": "serie-1-e2",
+              "title": "E2 — Modelagem",
+              "video": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+            },
+            {
+              "id": "serie-1-e3",
+              "title": "E3 — Animação",
+              "video": "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8"
+            },
+            {
+              "id": "serie-1-e4",
+              "title": "E4 — Finalização",
+              "video": "https://test-streams.mux.dev/pts_shift/master.m3u8"
+            }
+          ]
+        },
+        {
+          "id": "serie-2",
+          "title": "Blender Files",
+          "meta": "T1 · 2 episódios",
+          "color": "#4a5c2a",
+          "video": "https://test-streams.mux.dev/pts_shift/master.m3u8",
+          "description": "Documentário sobre arquivos abertos.",
+          "episodes": [
+            {
+              "id": "serie-2-e1",
+              "title": "E1 — Origem",
+              "video": "https://test-streams.mux.dev/pts_shift/master.m3u8"
+            },
+            {
+              "id": "serie-2-e2",
+              "title": "E2 — Hoje",
+              "video": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+            }
+          ]
+        },
+        {
+          "id": "serie-3",
+          "title": "Frames",
+          "meta": "T1 · 3 episódios",
+          "color": "#6b4a2a",
+          "video": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+          "description": "A história de cada quadro.",
+          "episodes": [
+            {
+              "id": "serie-3-e1",
+              "title": "E1",
+              "video": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+            },
+            {
+              "id": "serie-3-e2",
+              "title": "E2",
+              "video": "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8"
+            },
+            {
+              "id": "serie-3-e3",
+              "title": "E3",
+              "video": "https://test-streams.mux.dev/pts_shift/master.m3u8"
+            }
+          ]
+        },
+        {
+          "id": "serie-4",
+          "title": "Night Shift",
+          "meta": "T1 · 1 episódio",
+          "color": "#3f2a5c",
+          "video": "https://test-streams.mux.dev/pts_shift/master.m3u8",
+          "description": "Um turno da noite como nenhum outro."
+        },
+        {
+          "id": "serie-5",
+          "title": "Pixels",
+          "meta": "T1 · 2 episódios",
+          "color": "#2a5c5c",
+          "video": "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8"
+        }
+      ]
+    },
+    {
+      "id": "docs",
+      "title": "Documentários",
+      "type": "wide",
+      "items": [
+        {
+          "id": "doc-1",
+          "title": "Aberto por padrão",
+          "meta": "2024 · 45 min",
+          "color": "#1f4a3d",
+          "video": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+          "description": "Como licenças abertas mudaram a produção audiovisual."
+        },
+        {
+          "id": "doc-2",
+          "title": "Codec Wars",
+          "meta": "2023 · 38 min",
+          "color": "#4a1f2f",
+          "video": "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8",
+          "description": "H.264, HEVC, AV1: a batalha dos formatos."
+        },
+        {
+          "id": "doc-3",
+          "title": "CDN",
+          "meta": "2022 · 52 min",
+          "color": "#1f2f4a",
+          "video": "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
+          "description": "A infraestrutura invisível por trás do streaming."
+        },
+        {
+          "id": "doc-4",
+          "title": "Áudio 3D",
+          "meta": "2023 · 29 min",
+          "color": "#4a3d1f",
+          "video": "https://test-streams.mux.dev/pts_shift/master.m3u8",
+          "description": "Som imersivo explicado."
+        }
+      ]
+    }
+  ]
+}

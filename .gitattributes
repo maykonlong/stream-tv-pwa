@@ -1,0 +1,4 @@
+demo/* -text
+*.m3u8 -text
+*.ts -text
+*.png binary
